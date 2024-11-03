@@ -1,0 +1,63 @@
+name: GLuaTest Runner
+
+on:
+  workflow_dispatch:
+
+jobs:
+  run-tests:
+    name: Run GLuaTest Suite
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Install dependencies
+        run : |
+          sudo apt-get update
+          sudo apt-get install -y curl unzip
+
+      - name: Setup Override Dirs
+        run: |
+          mkdir -v $GITHUB_WORKSPACE/gmod_overrides
+          mkdir -pv $GITHUB_WORKSPACE/gmod_overrides/addons
+          mkdir -pv $GITHUB_WORKSPACE/gmod_overrides/lua/bin
+
+          mkdir -v $GITHUB_WORKSPACE/gmod_overrides_x64
+          mkdir -pv $GITHUB_WORKSPACE/gmod_overrides_x64/addons
+          mkdir -pv $GITHUB_WORKSPACE/gmod_overrides_x64/lua/bin
+
+      - name: Get Holylib
+        run : |
+          # Ghostinj
+          curl -L -o ghostinj.dll.zip https://github.com/RaphaelIT7/gmod-holylib/releases/download/Release0.6.1/ghostinj.dll.zip
+          unzip ghostinj.dll.zip -d $GITHUB_WORKSPACE/gmod_overrides
+
+          curl -L -o gostinj.dll.64x.zip https://github.com/RaphaelIT7/gmod-holylib/releases/download/Release0.6.1/ghostinj.dll.64x.zip
+          unzip gostinj.dll.64x.zip -d $GITHUB_WORKSPACE/gmod_overrides_x64
+
+
+          # DLL
+          curl -L -o gmsv_holylib_linux.so.dll https://github.com/RaphaelIT7/gmod-holylib/releases/download/Release0.6.1/gmsv_holylib_linux.so.zip
+          unzip gmsv_holylib_linux.so.dll -d $GITHUB_WORKSPACE/gmod_overrides/lua/bin
+
+          curl -L -o gmsv_holylib_linux64.so.64x.zip https://github.com/RaphaelIT7/gmod-holylib/releases/download/Release0.6.1/gmsv_holylib_linux64.so.64x.zip
+          unzip gmsv_holylib_linux64.so.64x.zip -d $GITHUB_WORKSPACE/gmod_overrides_x64/lua/bin
+
+          # VDF
+          curl -L -o holylib.vdf https://github.com/RaphaelIT7/gmod-holylib/releases/download/Release0.6.1/holylib.vdf
+          cp -v holylib.vdf $GITHUB_WORKSPACE/gmod_overrides/addons/
+          cp -v holylib.vdf $GITHUB_WORKSPACE/gmod_overrides_x64/addons/
+
+      - name: Run GLuaTest (main)
+        uses: CFC-Servers/GLuaTest/.github/workflows/run_tests_runnerimprovements.yml@feature/runner-improvements
+        with:
+          branch: "main"
+          extra-startup-args: "-usegh"
+          gluatest-ref: "feature/runner-improvements"
+          custom-override: "$GITHUB_WORKSPACE/gmod_overrides"
+
+      - name: Run GLuaTest (x86-64)
+        uses: CFC-Servers/GLuaTest/.github/workflows/run_tests_runnerimprovements.yml@feature/runner-improvements
+        with:
+          branch: "x86-64"
+          extra-startup-args: "-usegh"
+          gluatest-ref: "feature/runner-improvements"
+          custom-override: "$GITHUB_WORKSPACE/gmod_overrides"
